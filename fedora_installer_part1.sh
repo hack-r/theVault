@@ -1,0 +1,39 @@
+UPGRADE="No"
+
+echo "Let's get started with a dnf upgrade"
+if [$UPGRADE == "Yes"]; then
+	sudo dnf upgrade --refresh -y
+fi
+
+echo "Installing PHP and PHP modules..."
+sudo dnf install -y php php-cli php-common php-fpm php-json php-pdo php-mbstring php-xml php-opcache php-curl php-zip php-sodium php-intl php-gd php-bcmath
+
+echo "Installing Laravel Composer..."
+if ! command -v composer >/dev/null 2>&1; then
+	sudo dnf install -y composer
+fi
+
+echo "Installing NGINX..."
+sudo dnf install nginx -y
+
+echo "Enabling and starting NGINX..."
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+echo "Setting up firewall..."
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --reload
+
+echo "MariaDB setup..."
+sudo dnf install mariadb-server -y
+sudo systemctl start mariadb
+sudo systemctl enable mariadb
+sudo mysql_secure_installation
+
+echo "Setup marketpalce DB in Maria/MySQL..."
+echo ""
+echo "OK, this part needs to be done manually, then you can continue to run fedora_installer_part2.sh"
+echo "Setup your root password for MariaDB then run mysql --defaults-file=${CONFIG_FILE} -e "CREATE DATABASE>"
+
+
+

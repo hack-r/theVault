@@ -1,0 +1,11 @@
+This part was not working well as part of the automated configuration script.
+
+mysql -u root -p
+CREATE DATABASE marketplace DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+exit
+
+The second 2 lines above are run within the MariaDB shell. Back to bash (or Zsh, etc.) please be sure to run:
+
+mysql_secure_installation
+
+and accept all of the security recommendations(!). This is a darknet store. People and bots will begin trying to hack it instantly.
