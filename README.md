@@ -3,7 +3,7 @@
 Welcome to **theVault**! This is a prototype darknet vendor store inspired by:
 
 1. Goldhat Free Market
-2. The 2024 novel "BabyX" by Kira Peikoff, which explores a near-future darknet vendor store for selling DNA.
+2. The 2024 novel ["Baby X" by Kira Peikoff] (https://www.barnesandnoble.com/w/baby-x-kira-peikoff/1143604735), which explores a near-future darknet vendor store for selling DNA.
 
 Goldhat itself was a PHP upgrade and security enhancement fork of Eckmar's Marketplace v2.0.
 
