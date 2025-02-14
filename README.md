@@ -15,7 +15,7 @@ Goldhat was a legal darknet market-like store forked from Eckmar's Marketplace v
 
 > **Note:** The version released today, February 14, 2025, is in a fairly raw state, with numerous updates and code improvements pending. When the key updates are complete a hosted demo link will be added in place of this note.
 
-*K: Happy Valentine's Day!*
+*Happy Valentine's Day!*
 
 ## 🚀 Project Overview
 
