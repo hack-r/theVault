@@ -95,7 +95,7 @@ For inquiries or support, please reach out to me directly. I can be reached by G
 
 ## 🎩 Friendly Advice
 
-Big Brother leverages the Eye of Sauron and has many dungeons. The darknet is filled with hackers and LEAs. If you're thinking of using this code to run a drug market/store or other illegal activities, please rethink it. You'll get yourself into trouble. Use this to learn or to give the so-called 'dark net' some much needed original, non-illegal functionality. If you have money to invest and want a few ideas as well as a business partner, drop me a line.
+Big Brother leverages the Eye of Sauron and has many dungeons. The darknet is filled with hackers and LEAs. If you're thinking of using this code to run a drug market/store or other arguably illegal activities, please rethink it. You'll get yourself into trouble. Use this to learn or to give the so-called 'dark net' some much needed original, non-illegal functionality. Give the gift of possible anonymity to a legal service. If you would like to invest and want a few ideas as well as a business partner, drop me a line.
 
 ---
 
