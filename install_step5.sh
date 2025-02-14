@@ -1,46 +1,68 @@
-echo "Time to install PHP Artisan!"
-composer global require laravel/installer
+#!/bin/bash
 
 echo "Finally, it's time to actually build the darknet store. We will be creating a folder in /var/www to hold the files. We'll call it /var/www/thevault but you could name it anything you like."
 
-# Create the main directory if it doesn't exist
-if [ ! -d /var/www/thevault ]; then
-    sudo mkdir /var/www/thevault
-else
-    echo "/var/www/thevault already exists."
+# Get the current working directory
+CWD=$(pwd)
+VAULT_DIR="$CWD/the_vault"
+TARGET_DIR="/var/www/thevault"
+
+# Remove the target directory if it exists
+if [ -d "$TARGET_DIR" ]; then
+    echo "Removing existing directory $TARGET_DIR..."
+    sudo rm -rf "$TARGET_DIR"
 fi
 
-# Check if the www-data group exists, if not create it
-if ! getent group www-data > /dev/null; then
-    echo "Creating group www-data."
-    sudo groupadd www-data
-fi
+# Create the main directory
+echo "Creating directory $TARGET_DIR..."
+sudo mkdir "$TARGET_DIR"
 
 # Change ownership and permissions
-sudo chown -R www-data:www-data /var/www/thevault/public 2>/dev/null || echo "Directory /var/www/thevault/public does not exist."
-sudo chmod 755 /var/www 2>/dev/null || echo "Failed to change permissions for /var/www."
-sudo chmod -R 755 /var/www/thevault/bootstrap/cache 2>/dev/null || echo "Directory /var/www/thevault/bootstrap/cache does not exist."
-sudo chmod -R 755 /var/www/thevault/storage 2>/dev/null || echo "Directory /var/www/thevault/storage does not exist."
+CURRENT_USER=$(whoami)
+CURRENT_GROUP=$(id -gn)
 
-# Create storage link
-if [ -f artisan ]; then
+# Create necessary subdirectories
+echo "Creating necessary subdirectories..."
+sudo mkdir -p "$TARGET_DIR/public"
+sudo mkdir -p "$TARGET_DIR/bootstrap/cache"
+sudo mkdir -p "$TARGET_DIR/storage"
+sudo mkdir -p "$TARGET_DIR/storage/public/products"
+
+# Change ownership and permissions
+echo "Setting ownership and permissions..."
+sudo chown -R $CURRENT_USER:$CURRENT_GROUP "$TARGET_DIR/public"
+sudo chmod 755 /var/www
+sudo chmod -R 755 "$TARGET_DIR/bootstrap/cache"
+sudo chmod -R 755 "$TARGET_DIR/storage"
+sudo chmod -R 755 "$TARGET_DIR/storage/public/products"
+
+# Check if the artisan file exists and create storage link
+if [ -f "$VAULT_DIR/artisan" ]; then
+    echo "Creating storage link..."
+    cd "$VAULT_DIR"
     php artisan storage:link
 else
-    echo "Could not find artisan file. Make sure you are in the correct directory."
+    echo "Error: Could not find artisan file. Make sure you are in the correct directory."
+    exit 1
 fi
 
-# Create child directories if they don't exist
-if [ ! -d /var/www/thevault/storage/public/products ]; then
-    sudo mkdir -p /var/www/thevault/storage/public/products
+# Check for Composer dependencies and install if necessary
+if [ ! -d "$VAULT_DIR/vendor" ]; then
+    echo "Vendor directory does not exist. Running 'composer install'..."
+    composer install --working-dir="$VAULT_DIR"
+    if [ $? -ne 0 ]; then
+        echo "Error: Composer install failed. Please check for errors."
+        exit 1
+    fi
+fi
+
+# Copy contents from the_vault to /var/www/thevault
+echo "Copying contents from $VAULT_DIR to $TARGET_DIR..."
+if [ -d "$VAULT_DIR" ]; then
+    sudo cp -rf "$VAULT_DIR/"* "$TARGET_DIR/"
 else
-    echo "/var/www/thevault/storage/public/products already exists."
+    echo "Error: the_vault directory does not exist."
+    exit 1
 fi
 
-# Set permissions for the products directory
-sudo chmod -R 755 /var/www/thevault/storage/public/products
-sudo chgrp -R www-data /var/www/thevault/storage/public/products
-sudo chmod -R ug+rwx /var/www/thevault/storage/public/products
-
-sudo cp -rf the_vault /var/www/thevault
-
-echo "Setup completed."
+echo "Setup completed successfully."

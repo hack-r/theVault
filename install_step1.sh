@@ -8,6 +8,17 @@ fi
 echo "Installing PHP and PHP modules..."
 sudo dnf install -y php php-cli php-common php-fpm php-json php-pdo php-mbstring php-xml php-opcache php-curl php-zip php-sodium php-intl php-gd php-bcmath
 
+echo "Installing Nginx..."
+sudo dnf install -y nginx
+sudo ufw allow 'Nginx HTTP'
+# If missing:
+#	sudo nano /etc/ufw/applications.d/nginx
+#[Nginx HTTP]
+#title=Web Server
+#description=HTTP traffic
+#ports=80
+
+
 echo "Installing Laravel Composer..."
 if ! command -v composer >/dev/null 2>&1; then
 	sudo dnf install -y composer
