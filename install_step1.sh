@@ -6,7 +6,7 @@ if [$UPGRADE == "Yes"]; then
 fi
 
 echo "Installing PHP and PHP modules..."
-sudo dnf install -y php php-cli php-common php-fpm php-json php-pdo php-mbstring php-xml php-opcache php-curl php-zip php-sodium php-intl php-gd php-bcmath
+sudo dnf install -y php php-cli php-common php-fpm php-json php-pdo php-mbstring php-xml php-opcache php-curl php-zip php-sodium php-intl php-gd php-bcmath php-xmlrpc
 
 echo "Installing Nginx..."
 sudo dnf install -y nginx

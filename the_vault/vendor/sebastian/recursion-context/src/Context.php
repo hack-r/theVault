@@ -1,160 +1,40 @@
-<?php
+<?php declare(strict_types=1);
 /*
- * This file is part of the Recursion Context package.
+ * This file is part of sebastian/recursion-context.
  *
  * (c) Sebastian Bergmann <sebastian@phpunit.de>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
 namespace SebastianBergmann\RecursionContext;
 
-/**
- * A context containing previously processed arrays and objects
- * when recursively processing a value.
- */
+use const PHP_INT_MAX;
+use const PHP_INT_MIN;
+use function array_key_exists;
+use function array_pop;
+use function array_slice;
+use function count;
+use function is_array;
+use function random_int;
+use function spl_object_id;
+use SplObjectStorage;
+
 final class Context
 {
     /**
-     * @var array[]
+     * @var list<array<mixed>>
      */
-    private $arrays;
+    private array $arrays = [];
 
     /**
-     * @var \SplObjectStorage
+     * @var SplObjectStorage<object, null>
      */
-    private $objects;
+    private SplObjectStorage $objects;
 
-    /**
-     * Initialises the context
-     */
     public function __construct()
     {
-        $this->arrays  = array();
-        $this->objects = new \SplObjectStorage;
-    }
-
-    /**
-     * Adds a value to the context.
-     *
-     * @param array|object $value The value to add.
-     *
-     * @return int|string The ID of the stored value, either as a string or integer.
-     *
-     * @throws InvalidArgumentException Thrown if $value is not an array or object
-     */
-    public function add(&$value)
-    {
-        if (is_array($value)) {
-            return $this->addArray($value);
-        } elseif (is_object($value)) {
-            return $this->addObject($value);
-        }
-
-        throw new InvalidArgumentException(
-            'Only arrays and objects are supported'
-        );
-    }
-
-    /**
-     * Checks if the given value exists within the context.
-     *
-     * @param array|object $value The value to check.
-     *
-     * @return int|string|false The string or integer ID of the stored value if it has already been seen, or false if the value is not stored.
-     *
-     * @throws InvalidArgumentException Thrown if $value is not an array or object
-     */
-    public function contains(&$value)
-    {
-        if (is_array($value)) {
-            return $this->containsArray($value);
-        } elseif (is_object($value)) {
-            return $this->containsObject($value);
-        }
-
-        throw new InvalidArgumentException(
-            'Only arrays and objects are supported'
-        );
-    }
-
-    /**
-     * @param array $array
-     *
-     * @return bool|int
-     */
-    private function addArray(array &$array)
-    {
-        $key = $this->containsArray($array);
-
-        if ($key !== false) {
-            return $key;
-        }
-
-        $key            = count($this->arrays);
-        $this->arrays[] = &$array;
-
-        if (!isset($array[PHP_INT_MAX]) && !isset($array[PHP_INT_MAX - 1])) {
-            $array[] = $key;
-            $array[] = $this->objects;
-        } else { /* cover the improbable case too */
-            // @codeCoverageIgnoreStart
-            do {
-                $key = random_int(PHP_INT_MIN, PHP_INT_MAX);
-            } while (isset($array[$key]));
-
-            $array[$key] = $key;
-
-            do {
-                $key = random_int(PHP_INT_MIN, PHP_INT_MAX);
-            } while (isset($array[$key]));
-
-            $array[$key] = $this->objects;
-            // @codeCoverageIgnoreEnd
-        }
-
-        return $key;
-    }
-
-    /**
-     * @param object $object
-     *
-     * @return string
-     */
-    private function addObject($object)
-    {
-        if (!$this->objects->contains($object)) {
-            $this->objects->attach($object);
-        }
-
-        return spl_object_hash($object);
-    }
-
-    /**
-     * @param array $array
-     *
-     * @return int|false
-     */
-    private function containsArray(array &$array)
-    {
-        $end = array_slice($array, -2);
-
-        return isset($end[1]) && $end[1] === $this->objects ? $end[0] : false;
-    }
-
-    /**
-     * @param object $value
-     *
-     * @return string|false
-     */
-    private function containsObject($value)
-    {
-        if ($this->objects->contains($value)) {
-            return spl_object_hash($value);
-        }
-
-        return false;
+        $this->objects = new SplObjectStorage;
     }
 
     /**
@@ -168,5 +48,107 @@ final class Context
                 array_pop($array);
             }
         }
+    }
+
+    /**
+     * @template T of object|array
+     *
+     * @param T $value
+     *
+     * @param-out T $value
+     */
+    public function add(array|object &$value): false|int|string
+    {
+        if (is_array($value)) {
+            return $this->addArray($value);
+        }
+
+        return $this->addObject($value);
+    }
+
+    /**
+     * @template T of object|array
+     *
+     * @param T $value
+     *
+     * @param-out T $value
+     */
+    public function contains(array|object &$value): false|int|string
+    {
+        if (is_array($value)) {
+            return $this->containsArray($value);
+        }
+
+        return $this->containsObject($value);
+    }
+
+    /**
+     * @param array<mixed> $array
+     */
+    private function addArray(array &$array): int
+    {
+        $key = $this->containsArray($array);
+
+        if ($key !== false) {
+            return $key;
+        }
+
+        $key            = count($this->arrays);
+        $this->arrays[] = &$array;
+
+        if (!array_key_exists(PHP_INT_MAX, $array) && !array_key_exists(PHP_INT_MAX - 1, $array)) {
+            $array[] = $key;
+            $array[] = $this->objects;
+        } else {
+            /* Cover the improbable case, too.
+             *
+             * Note that array_slice() (used in containsArray()) will return the
+             * last two values added, *not necessarily* the highest integer keys
+             * in the array. Therefore, the order of these writes to $array is
+             * important, but the actual keys used is not. */
+            do {
+                /** @noinspection PhpUnhandledExceptionInspection */
+                $key = random_int(PHP_INT_MIN, PHP_INT_MAX);
+            } while (array_key_exists($key, $array));
+
+            $array[$key] = $key;
+
+            do {
+                /** @noinspection PhpUnhandledExceptionInspection */
+                $key = random_int(PHP_INT_MIN, PHP_INT_MAX);
+            } while (array_key_exists($key, $array));
+
+            $array[$key] = $this->objects;
+        }
+
+        return $key;
+    }
+
+    private function addObject(object $object): int
+    {
+        if (!$this->objects->contains($object)) {
+            $this->objects->attach($object);
+        }
+
+        return spl_object_id($object);
+    }
+
+    /**
+     * @param array<mixed> $array
+     */
+    private function containsArray(array $array): false|int
+    {
+        $end = array_slice($array, -2);
+
+        return isset($end[1]) && $end[1] === $this->objects ? $end[0] : false;
+    }
+
+    private function containsObject(object $value): false|int
+    {
+        if ($this->objects->contains($value)) {
+            return spl_object_id($value);
+        }
+
+        return false;
     }
 }
