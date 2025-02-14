@@ -2,7 +2,7 @@
 
 Welcome to **theVault**! This is a prototype darknet vendor store inspired by:
 
-1. Goldhat Free Market <img src="the_vault/public/goldhat.png" alt="Goldhat Free Market" style="width: 25px; height: 25px;">
+1. Goldhat Free Market. <img src="the_vault/public/goldhat.png" alt="Goldhat Free Market" style="width: 25px; height: 25px;">
 2. The epic 2024 medical thriller ["Baby X" by Kira Peikoff](https://www.barnesandnoble.com/w/baby-x-kira-peikoff/1143604735), which explores a near-future darknet vendor store for selling DNA in wake of advances in fertilization technologies. Available on Amazon, Audible, and Barnes & Noble.
 
 Goldhat was a legal darknet market-like store forked from Eckmar's Marketplace v2.0. It included a major PHP upgrade (from v7 to v8) as well as a security enhancements with significant hardening of Nginx. Eckmar's project had been abandoned due to major changes needed for compatibility with modern PHP. Goldhat also restricted user-to-user communications and implemented other safeguards to prevent abuse during its public beta. Thanks to Eckmar, who can be contacted on XMPP: eckmar@creep.im or eckmar@xmpp.zone. 
