@@ -1,13 +1,18 @@
 # 🏰 theVault
-![The Vault logo](the_vault/public/thevault.png)
 
 Welcome to **theVault**! This is a prototype darknet vendor store inspired by:
 
-1. Goldhat Free Market
+1. Goldhat Free Market <img src="the_vault/public/goldhat.png" alt="Goldhat Free Market" style="width: 25px; height: 25px;">
 2. The epic 2024 medical thriller ["Baby X" by Kira Peikoff](https://www.barnesandnoble.com/w/baby-x-kira-peikoff/1143604735), which explores a near-future darknet vendor store for selling DNA in wake of advances in fertilization technologies. Available on Amazon, Audible, and Barnes & Noble.
 
-Goldhat was a legal darknet market-like store comprising a major PHP upgrade (from v7 to v8, with many ripple effects) as well as a security enhancement fork of Eckmar's Marketplace v2.0 with significant hardening of Nginx. Goldhat also restricted user-to-user communications and implemented other safeguards to prevent abuse during its public beta. Thanks to Eckmar, who can be contacted on XMPP: eckmar@creep.im or eckmar@xmpp.zone. 
-![Goldhat Free Market](the_vault/public/goldhat.png)
+Goldhat was a legal darknet market-like store forked from Eckmar's Marketplace v2.0. It included a major PHP upgrade (from v7 to v8) as well as a security enhancements with significant hardening of Nginx. Eckmar's project had been abandoned due to major changes needed for compatibility with modern PHP. Goldhat also restricted user-to-user communications and implemented other safeguards to prevent abuse during its public beta. Thanks to Eckmar, who can be contacted on XMPP: eckmar@creep.im or eckmar@xmpp.zone. 
+
+<div style="text-align: center;">
+    <img src="the_vault/public/thevault.png" alt="The Vault logo" style="max-width: 100%; height: auto;">
+    <p style="font-style: italic;">Your trusted darknet vendor store.</p>
+</div>
+
+> **Note:** The version released today, February 14, 2025, is in a fairly raw state, with numerous updates and code improvements pending. When the key updates are complete a hosted demo link will be added in place of this note.
 
 Happy Valentine's Day to KP. <3
 
