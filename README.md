@@ -1,4 +1,5 @@
 # 🏰 theVault
+![The Vault logo](the_vault/public/thevault.png)
 
 Welcome to **theVault**! This is a prototype darknet vendor store inspired by:
 
@@ -6,6 +7,7 @@ Welcome to **theVault**! This is a prototype darknet vendor store inspired by:
 2. The epic 2024 medical thriller ["Baby X" by Kira Peikoff](https://www.barnesandnoble.com/w/baby-x-kira-peikoff/1143604735), which explores a near-future darknet vendor store for selling DNA in wake of advances in fertilization technologies. Available on Amazon, Audible, and Barnes & Noble.
 
 Goldhat was a legal darknet market-like store comprising a major PHP upgrade (from v7 to v8, with many ripple effects) as well as a security enhancement fork of Eckmar's Marketplace v2.0 with significant hardening of Nginx. Goldhat also restricted user-to-user communications and implemented other safeguards to prevent abuse during its public beta. Thanks to Eckmar, who can be contacted on XMPP: eckmar@creep.im or eckmar@xmpp.zone. 
+![Goldhat Free Market](the_vault/public/goldhat.png)
 
 Happy Valentine's Day to KP. <3
 
@@ -19,20 +21,28 @@ This project has been tested on Debian and Fedora. Fedora is recommended on the 
 
 - **Modern Framework**: Built on Laravel 11 and PHP 8.3.16 for enhanced performance and maintainability.
 - **Elasticsearch Vectorstore**: Fast searching with the newest elasticsearch (currently 8.17).
-- **OpenJDK**
-- **Redis** 
+- **OpenJDK**: Updated Java, bundled with elasticsearch for compatibility.
+- **Redis**: Optional Redis 7.2.7 support for improved app performance.
 
 ## 📦 Installation
 
 To get started with **theVault**, follow these steps:
 
 1. Run the initial configuration script:
-   `./fedora_installer_part1.sh`
+   `./install_step1.sh`
 
-2. Follow the instructions in `the_manual_mariadb_step.txt` to set up your MariaDB database.
+2. Follow the instructions in `install_step2.txt` to set up your MariaDB database.
 
-3. Complete the installation by running:
-   `./fedora_installer_part2.sh`
+3. Next, running `install_step3.sh` will setup Elasticsearch. This one is tricky, but there are multiple methods available, notes in the script, and a highly recommended .repo file to help you.
+
+4. Check `install_step4.txt` if you encounter any errors or memory issues.
+
+5. Optional: Install Redis for improved performance using `optional_redis.sh`. Edit /etc/redis/redis.conf to have the value 'supervised no' to 'supervised systemd'. At this point, you will be able to use `redis-cli`.
+
+6. Copy over the store files to /var/www/thevault (or whatever you name your folder) using `install_step4.sh`. Feel free to edit them.
+
+
+For additional help with Redis, check out this article: https://linuxcapable.com/install-redis-on-fedora-linux/
 
 The process is identical for Debian, but uses apt and package names end with -dev in Debian where they are -devel for Fedora. The installer will attempt to directly install elasticsearch for you, but I recommend to comment that out and use either the provided repo file for a dnf/yum-based installation or use the Docker container from https://elastic.co. Other installation strategies are also available on their website.
 
