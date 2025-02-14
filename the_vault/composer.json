@@ -5,17 +5,17 @@
     "license": "MIT",
     "type": "project",
     "require": {
-        "php": ">=5.6.4",
+        "php": "^8.3",
         "ext-gd": "*",
-        "laravel/framework": "5.4.*",
-        "laravel/tinker": "~1.0",
-        "mews/captcha": "^2.1"
+        "laravel/framework": "^11.0",
+        "laravel/tinker": "^2.8",
+        "mews/captcha": "^3.2"
     },
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "require-dev": {
-        "fzaninotto/faker": "~1.4",
-        "mockery/mockery": "0.9.*",
-        "phpunit/phpunit": "~5.7"
+        "fakerphp/faker": "^1.21",
+        "mockery/mockery": "^1.5",
+        "phpunit/phpunit": "^10.3"
     },
     "autoload": {
         "classmap": [
@@ -24,7 +24,10 @@
         "psr-4": {
             "App\\": "app/"
         },
-        "files": ["app/Http/Helpers.php","app/Http/Easybitcoin.php"]
+        "files": [
+            "app/Http/Helpers.php",
+            "app/Http/Easybitcoin.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
