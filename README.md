@@ -5,7 +5,9 @@ Welcome to **theVault**! This is a prototype darknet vendor store inspired by:
 1. Goldhat Free Market
 2. The epic 2024 'medical thriller' ["Baby X" by Kira Peikoff](https://www.barnesandnoble.com/w/baby-x-kira-peikoff/1143604735), which explores a near-future darknet vendor store for selling DNA in wake of advances in fertilization technologies.
 
-Goldhat itself was a PHP upgrade and security enhancement fork of Eckmar's Marketplace v2.0. Shout out to Eckmar: XMPP: eckmar@creep.im or eckmar@xmpp.zone.
+Goldhat was a legal darknet market-like store comprising a major PHP upgrade (from v7 to v8, with many ripple effects) as well as a security enhancement fork of Eckmar's Marketplace v2.0 with significant hardening of Nginx. Goldhat also restricted user-to-user communications and implemented other safeguards to prevent abuse during its public beta. Thanks to Eckmar, who can be contacted on XMPP: eckmar@creep.im or eckmar@xmpp.zone. 
+
+Happy Valentine's Day to KP. <3
 
 ## 🚀 Project Overview
 
@@ -15,10 +17,10 @@ This project has been tested on Debian and Fedora. Fedora is recommended on the 
 
 ### ⚙️ Features
 
-- **Modern Framework**: Built on Laravel 11 for enhanced performance and maintainability.
-- **Security Enhancements**: Initial security patches and hardening based on Goldhat's updates.
-- **User Restrictions**: Limited user actions to prevent abuse and ensure compliance.
+- **Modern Framework**: Built on Laravel 11 and PHP 8.3.16 for enhanced performance and maintainability.
 - **Elasticsearch Vectorstore**: Fast searching with the newest elasticsearch (currently 8.17).
+- **OpenJDK**
+- **Redis** 
 
 ## 📦 Installation
 
@@ -34,7 +36,7 @@ To get started with **theVault**, follow these steps:
 
 The process is identical for Debian, but uses apt and package names end with -dev in Debian where they are -devel for Fedora. The installer will attempt to directly install elasticsearch for you, but I recommend to comment that out and use either the provided repo file for a dnf/yum-based installation or use the Docker container from https://elastic.co. Other installation strategies are also available on their website.
 
-	`sudo dnf install --enablerepo=elasticsearch elasticsearch`
+	sudo dnf install --enablerepo=elasticsearch elasticsearch
 
 ## ⚠️ Status and Important Notes (MUST READ)
 
@@ -55,7 +57,8 @@ Contributions are welcome! If you have suggestions or improvements, feel free to
 
 ## 📜 License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+This project is licensed under a custom, MIT-like license. See the [LICENSE](sudo dnf install https://download.oracle.com/java/GA/jdk8/latest/binaries/jdk-8uXXX-linux-x64.rpm
+) file for more details.
 
 ## 📞 Contact
 
@@ -77,7 +80,7 @@ For inquiries or support, please reach out to me directly. I can be reached by G
 
 ## 🎩 Friendly Advice
 
-Big Brother leverages the Eye of Sauron and has many dungeons. The darknet is filled with hackers and LEAs. If you're thinking of using this code to run a drug market/store or other illegal activities, please rethink it. You'll get yourself into trouble. Use this to learn or to give the so-called dark net some much needed, original, non-illegal functionality. If you have money to invest and want a few ideas as well as a business partner, drop me a line.
+Big Brother leverages the Eye of Sauron and has many dungeons. The darknet is filled with hackers and LEAs. If you're thinking of using this code to run a drug market/store or other illegal activities, please rethink it. You'll get yourself into trouble. Use this to learn or to give the so-called 'dark net' some much needed original, non-illegal functionality. If you have money to invest and want a few ideas as well as a business partner, drop me a line.
 
 ---
 
