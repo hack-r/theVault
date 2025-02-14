@@ -2,7 +2,7 @@
 # Setting up Nginx #
 ####################
 
-We installed nginx at the beginning. Time to configure it. I gave the original instructions to ChatGPT v4o-mini and requested some best practices. Here's the result.
+We installed nginx at the beginning. Time to configure it. I've included a working nginx example that assumes this is the only website being served by the server. If you have multiple sites you need to use separate .conf files for each one. I gave the original instructions to ChatGPT v4o-mini and requested some best practices. Here's the result.
 
 Setting up an .onion web application requires careful consideration of security and privacy practices, especially since .onion services are often used for sensitive applications. Below is a set of instructions for configuring Nginx for a .onion web app, along with recommendations for hardening your setup.
 
