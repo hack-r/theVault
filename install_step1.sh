@@ -32,7 +32,7 @@ sudo mysql_secure_installation
 
 echo "Setup marketpalce DB in Maria/MySQL..."
 echo ""
-echo "OK, this part needs to be done manually, then you can continue to run fedora_installer_part2.sh"
+echo "OK, this part needs to be done manually (see also), then you can continue to run install_step3.sh"
 echo "Setup your root password for MariaDB then run mysql --defaults-file=${CONFIG_FILE} -e "CREATE DATABASE>"
 
 
