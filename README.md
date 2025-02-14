@@ -7,10 +7,11 @@ Welcome to **theVault**! This is a prototype darknet vendor store inspired by:
 
 Goldhat was a legal darknet market-like store forked from Eckmar's Marketplace v2.0. It included a major PHP upgrade (from v7 to v8) as well as a security enhancements with significant hardening of Nginx. Eckmar's project had been abandoned due to major changes needed for compatibility with modern PHP. Goldhat also restricted user-to-user communications and implemented other safeguards to prevent abuse during its public beta. Thanks to Eckmar, who can be contacted on XMPP: eckmar@creep.im or eckmar@xmpp.zone. 
 
-<div style="text-align: center;">
+<div style="text-align: center; margin: 0 auto; width: 80%;">
     <img src="the_vault/public/thevault.png" alt="The Vault logo" style="max-width: 100%; height: auto;">
     <p style="font-style: italic;">Your trusted darknet vendor store.</p>
 </div>
+
 
 > **Note:** The version released today, February 14, 2025, is in a fairly raw state, with numerous updates and code improvements pending. When the key updates are complete a hosted demo link will be added in place of this note.
 
