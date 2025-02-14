@@ -40,7 +40,7 @@ The process is identical for Debian, but uses apt and package names end with -de
 
 ## ⚠️ Status and Important Notes (MUST READ)
 
-- As of mid-February 2025, **advanced security and pentesting** features have **NOT** yet been added to the project. 
+- As of mid-February 2025, **advanced security features** and pentest audits have **NOT** yet been added to the project. 
 - Extra Nginx hardening is also pending. If you plan to put a clone or fork online, please ensure you handle these components yourself or consider hiring me for assistance.
 
 ## 💼 Freelance Support
@@ -57,8 +57,7 @@ Contributions are welcome! If you have suggestions or improvements, feel free to
 
 ## 📜 License
 
-This project is licensed under a custom, MIT-like license. See the [LICENSE](sudo dnf install https://download.oracle.com/java/GA/jdk8/latest/binaries/jdk-8uXXX-linux-x64.rpm
-) file for more details.
+This project is licensed under a custom, MIT-like license. See the [LICENSE](https://github.com/hack-r/theVault/blob/main/LICENSE) file for more details.
 
 ## 📞 Contact
 
