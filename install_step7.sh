@@ -1,3 +1,4 @@
+cd /var/www/thevault
 composer install
 npm install
 npm run prod
