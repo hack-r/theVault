@@ -1,0 +1,25 @@
+#######################
+DATABASE
+# update driver
+sudo dnf install php-mysqlnd
+# use interactive DB shell
+mysql -u root -p 
+
+######################
+STORE OPS
+# php-fpm debugging
+sudo dnf install php-fpm
+sudo systemctl restart php-fpm
+# pdo
+sudo dnf install php-mysqlnd
+php -m | grep pdo_mysql
+
+
+######################
+TROUBLESHOOTING
+# increase PHP watchers limit
+echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
+# misc
+php --ini | grep "Loaded Configuration File"
+
