@@ -3,9 +3,9 @@
 Welcome to **theVault**! This is a prototype darknet vendor store inspired by:
 
 1. Goldhat Free Market
-2. The 2024 novel ["Baby X" by Kira Peikoff](https://www.barnesandnoble.com/w/baby-x-kira-peikoff/1143604735), which explores a near-future darknet vendor store for selling DNA.
+2. The epic 2024 'medical thriller' ["Baby X" by Kira Peikoff](https://www.barnesandnoble.com/w/baby-x-kira-peikoff/1143604735), which explores a near-future darknet vendor store for selling DNA in wake of advances in fertilization technologies.
 
-Goldhat itself was a PHP upgrade and security enhancement fork of Eckmar's Marketplace v2.0.
+Goldhat itself was a PHP upgrade and security enhancement fork of Eckmar's Marketplace v2.0. Shout out to Eckmar: XMPP: eckmar@creep.im or eckmar@xmpp.zone.
 
 ## 🚀 Project Overview
 
@@ -18,6 +18,7 @@ This project has been tested on Debian and Fedora. Fedora is recommended on the 
 - **Modern Framework**: Built on Laravel 11 for enhanced performance and maintainability.
 - **Security Enhancements**: Initial security patches and hardening based on Goldhat's updates.
 - **User Restrictions**: Limited user actions to prevent abuse and ensure compliance.
+- **Elasticsearch Vectorstore**: Fast searching with the newest elasticsearch (currently 8.17).
 
 ## 📦 Installation
 
@@ -30,6 +31,10 @@ To get started with **theVault**, follow these steps:
 
 3. Complete the installation by running:
    `./fedora_installer_part2.sh`
+
+The process is identical for Debian, but uses apt and package names end with -dev in Debian where they are -devel for Fedora. The installer will attempt to directly install elasticsearch for you, but I recommend to comment that out and use either the provided repo file for a dnf/yum-based installation or use the Docker container from https://elastic.co. Other installation strategies are also available on their website.
+
+	`sudo dnf install --enablerepo=elasticsearch elasticsearch`
 
 ## ⚠️ Status and Important Notes (MUST READ)
 
