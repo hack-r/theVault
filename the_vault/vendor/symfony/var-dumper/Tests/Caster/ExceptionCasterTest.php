@@ -52,6 +52,7 @@ Exception {
       › }
     }
     %s%eTests%eCaster%eExceptionCasterTest.php:40 { …}
+    Symfony\Component\VarDumper\Tests\Caster\ExceptionCasterTest->testDefaultSettings() {}
 %A
 EODUMP;
 
@@ -70,7 +71,8 @@ EODUMP;
     ›     return new \Exception(''.$msg);
     › }
   }
-  %s%eTests%eCaster%eExceptionCasterTest.php:64 { …}
+  %s%eTests%eCaster%eExceptionCasterTest.php:65 { …}
+  Symfony\Component\VarDumper\Tests\Caster\ExceptionCasterTest->testSeek() {}
 %A
 EODUMP;
 
@@ -94,7 +96,8 @@ Exception {
       ›     return new \Exception(''.$msg);
       › }
     }
-    %s%eTests%eCaster%eExceptionCasterTest.php:82 { …}
+    %s%eTests%eCaster%eExceptionCasterTest.php:84 { …}
+    Symfony\Component\VarDumper\Tests\Caster\ExceptionCasterTest->testNoArgs() {}
 %A
 EODUMP;
 
@@ -219,6 +222,23 @@ Exception {
   #code: 0
   #file: "%sExceptionCasterTest.php"
   #line: 28
+}
+EODUMP;
+
+        $this->assertDumpMatchesFormat($expectedDump, $e, Caster::EXCLUDE_VERBOSE);
+    }
+
+    public function testAnonymous()
+    {
+        $e = new \Exception(sprintf('Boo "%s" ba.', \get_class(new class('Foo') extends \Exception {
+        })));
+
+        $expectedDump = <<<'EODUMP'
+Exception {
+  #message: "Boo "Exception@anonymous" ba."
+  #code: 0
+  #file: "%sExceptionCasterTest.php"
+  #line: %d
 }
 EODUMP;
 

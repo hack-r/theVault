@@ -33,7 +33,7 @@ class PdoSessionHandlerTest extends TestCase
 
     protected function getPersistentSqliteDsn()
     {
-        $this->dbFile = tempnam(sys_get_temp_dir(), 'sf2_sqlite_sessions');
+        $this->dbFile = tempnam(sys_get_temp_dir(), 'sf_sqlite_sessions');
 
         return 'sqlite:'.$this->dbFile;
     }
@@ -48,18 +48,22 @@ class PdoSessionHandlerTest extends TestCase
         return $pdo;
     }
 
+    /**
+     * @expectedException \InvalidArgumentException
+     */
     public function testWrongPdoErrMode()
     {
-        $this->expectException('InvalidArgumentException');
         $pdo = $this->getMemorySqlitePdo();
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_SILENT);
 
-        new PdoSessionHandler($pdo);
+        $storage = new PdoSessionHandler($pdo);
     }
 
+    /**
+     * @expectedException \RuntimeException
+     */
     public function testInexistentTable()
     {
-        $this->expectException('RuntimeException');
         $storage = new PdoSessionHandler($this->getMemorySqlitePdo(), ['db_table' => 'inexistent_table']);
         $storage->open('', 'sid');
         $storage->read('id');
@@ -67,9 +71,11 @@ class PdoSessionHandlerTest extends TestCase
         $storage->close();
     }
 
+    /**
+     * @expectedException \RuntimeException
+     */
     public function testCreateTableTwice()
     {
-        $this->expectException('RuntimeException');
         $storage = new PdoSessionHandler($this->getMemorySqlitePdo());
         $storage->createTable();
     }
@@ -130,10 +136,6 @@ class PdoSessionHandlerTest extends TestCase
 
     public function testReadConvertsStreamToString()
     {
-        if (\defined('HHVM_VERSION')) {
-            $this->markTestSkipped('PHPUnit_MockObject cannot mock the PDOStatement class on HHVM. See https://github.com/sebastianbergmann/phpunit-mock-objects/pull/289');
-        }
-
         $pdo = new MockPdo('pgsql');
         $pdo->prepareResult = $this->getMockBuilder('PDOStatement')->getMock();
 
@@ -141,7 +143,7 @@ class PdoSessionHandlerTest extends TestCase
         $stream = $this->createStream($content);
 
         $pdo->prepareResult->expects($this->once())->method('fetchAll')
-            ->willReturn([[$stream, 42, time()]]);
+            ->will($this->returnValue([[$stream, 42, time()]]));
 
         $storage = new PdoSessionHandler($pdo);
         $result = $storage->read('foo');
@@ -151,9 +153,6 @@ class PdoSessionHandlerTest extends TestCase
 
     public function testReadLockedConvertsStreamToString()
     {
-        if (\defined('HHVM_VERSION')) {
-            $this->markTestSkipped('PHPUnit_MockObject cannot mock the PDOStatement class on HHVM. See https://github.com/sebastianbergmann/phpunit-mock-objects/pull/289');
-        }
         if (filter_var(ini_get('session.use_strict_mode'), FILTER_VALIDATE_BOOLEAN)) {
             $this->markTestSkipped('Strict mode needs no locking for new sessions.');
         }
@@ -171,14 +170,14 @@ class PdoSessionHandlerTest extends TestCase
         $exception = null;
 
         $selectStmt->expects($this->atLeast(2))->method('fetchAll')
-            ->willReturnCallback(function () use (&$exception, $stream) {
+            ->will($this->returnCallback(function () use (&$exception, $stream) {
                 return $exception ? [[$stream, 42, time()]] : [];
-            });
+            }));
 
         $insertStmt->expects($this->once())->method('execute')
-            ->willReturnCallback(function () use (&$exception) {
+            ->will($this->returnCallback(function () use (&$exception) {
                 throw $exception = new \PDOException('', '23');
-            });
+            }));
 
         $storage = new PdoSessionHandler($pdo);
         $result = $storage->read('foo');
@@ -324,15 +323,15 @@ class PdoSessionHandlerTest extends TestCase
     public function testUrlDsn($url, $expectedDsn, $expectedUser = null, $expectedPassword = null)
     {
         $storage = new PdoSessionHandler($url);
-        $reflection = new \ReflectionClass(PdoSessionHandler::class);
 
-        foreach (['dsn' => $expectedDsn, 'username' => $expectedUser, 'password' => $expectedPassword] as $property => $expectedValue) {
-            if (!isset($expectedValue)) {
-                continue;
-            }
-            $property = $reflection->getProperty($property);
-            $property->setAccessible(true);
-            $this->assertSame($expectedValue, $property->getValue($storage));
+        $this->assertAttributeEquals($expectedDsn, 'dsn', $storage);
+
+        if (null !== $expectedUser) {
+            $this->assertAttributeEquals($expectedUser, 'username', $storage);
+        }
+
+        if (null !== $expectedPassword) {
+            $this->assertAttributeEquals($expectedPassword, 'password', $storage);
         }
     }
 
@@ -391,7 +390,7 @@ class MockPdo extends \PDO
     public function prepare($statement, $driverOptions = [])
     {
         return \is_callable($this->prepareResult)
-            ? \call_user_func($this->prepareResult, $statement, $driverOptions)
+            ? ($this->prepareResult)($statement, $driverOptions)
             : $this->prepareResult;
     }
 

@@ -13,9 +13,46 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
-        'App\Events\SomeEvent' => [
-            'App\Listeners\EventListener',
+        'App\Events\Message\MessageSent' => [
+            'App\Listeners\SendMessageNotifications',
         ],
+        'App\Events\Purchase\NewPurchase' => [
+            'App\Listeners\Purchase\ProductBoughtNotification'
+        ],
+        'App\Events\Purchase\ProductSent' => [
+            'App\Listeners\Purchase\ProductSentNotification'
+        ],
+        'App\Events\Purchase\ProductDelivered' => [
+            'App\Listeners\Purchase\ProductDeliveredNotification',
+            'App\Listeners\Experience\ProductDeliveredXPUpdate'
+        ],
+        'App\Events\Purchase\ProductDisputed' => [
+            'App\Listeners\Purchase\ProductDisputedNotification'
+        ],
+        'App\Events\Purchase\ProductDisputeResolved' => [
+            'App\Listeners\Purchase\ProductDisputeResolvedNotification',
+            'App\Listeners\Experience\ProductDisputeResolvedXPUpdate'
+        ],
+        'App\Events\Purchase\ProductDisputeNewMessageSent' => [
+            'App\Listeners\Purchase\ProductDisputeNewMessageNotification'
+        ],
+        'App\Events\Purchase\NewFeedback' => [
+            'App\Listeners\Experience\NewFeedbackXPUpdate'
+        ],
+        'App\Events\Purchase\CanceledPurchase' => [
+            'App\Listeners\Purchase\PurchaseCanceledNotification'
+        ]
+
+    ];
+
+    /**
+     * Event subscribers
+     *
+     * @var array
+     */
+    protected $subscribe = [
+        'App\Listeners\AdminActionSubscriber',
+        'App\Listeners\SupportEventSubscriber'
     ];
 
     /**
@@ -29,4 +66,5 @@ class EventServiceProvider extends ServiceProvider
 
         //
     }
+
 }

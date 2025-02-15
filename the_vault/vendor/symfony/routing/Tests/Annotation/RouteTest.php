@@ -16,10 +16,20 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class RouteTest extends TestCase
 {
+    /**
+     * @expectedException \BadMethodCallException
+     */
     public function testInvalidRouteParameter()
     {
-        $this->expectException('BadMethodCallException');
-        new Route(['foo' => 'bar']);
+        $route = new Route(['foo' => 'bar']);
+    }
+
+    /**
+     * @expectedException \BadMethodCallException
+     */
+    public function testTryingToSetLocalesDirectly()
+    {
+        $route = new Route(['locales' => ['nl' => 'bar']]);
     }
 
     /**
@@ -43,6 +53,7 @@ class RouteTest extends TestCase
             ['methods', ['GET', 'POST'], 'getMethods'],
             ['host', '{locale}.example.com', 'getHost'],
             ['condition', 'context.getMethod() == "GET"', 'getCondition'],
+            ['value', ['nl' => '/hier', 'en' => '/here'], 'getLocalizedPaths'],
         ];
     }
 }

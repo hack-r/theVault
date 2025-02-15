@@ -151,9 +151,6 @@ class CasterTest extends TestCase
         ];
     }
 
-    /**
-     * @requires PHP 7.0
-     */
     public function testAnonymousClass()
     {
         $c = eval('return new class extends stdClass { private $foo = "foo"; };');
@@ -171,7 +168,7 @@ EOTXT
 
         $this->assertDumpMatchesFormat(
             <<<'EOTXT'
-class@anonymous {
+@anonymous {
   -foo: "foo"
 }
 EOTXT

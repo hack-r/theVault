@@ -1,229 +1,622 @@
 <?php
 
 namespace App\Http\Controllers;
-use Auth;
-use Illuminate\Http\Request;
-use App\VendorApplication;
-use App\Product;
-use App\Settings;
-use App\Feedback;
-use App\User;
 
+use App\Address;
+use App\Category;
+use App\DigitalProduct;
+use App\Dispute;
+use App\Events\Purchase\ProductDisputeNewMessageSent;
+use App\Exceptions\RedirectException;
+use App\Exceptions\RequestException;
+use App\Http\Requests\Cart\MakePurchasesRequest;
+use App\Http\Requests\Cart\NewItemRequest;
+use App\Http\Requests\Profile\BecomeVendorRequest;
+use App\Http\Requests\Profile\ChangeAddressRequest;
+use App\Http\Requests\Profile\ChangeLocalCurrencyRequest;
+use App\Http\Requests\Profile\NewTicketMessageRequest;
+use App\Http\Requests\Profile\NewTicketRequest;
+use App\Http\Requests\Profile\ChangePasswordRequest;
+use App\Http\Requests\PGP\NewPGPKeyRequest;
+use App\Http\Requests\PGP\StorePGPRequest;
+use App\Http\Requests\Product\{NewBasicRequest,NewShippingRequest,NewDigitalRequest,NewImageRequest,NewOfferRequest,NewProductRequest,NewShippingOptionsRequest};
+use App\Http\Requests\Purchase\LeaveFeedbackRequest;
+use App\Http\Requests\Purchase\MakeDisputeRequest;
+use App\Http\Requests\Purchase\NewDisputeMessageRequest;
+use App\Http\Requests\Purchase\ResolveDisputeRequest;
+use App\Marketplace\Cart;
+use App\PhysicalProduct;
+use App\Product;
+use App\Purchase;
+use App\Ticket;
+use App\TicketReply;
+use App\Wishlist;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
-    public function Index(){
-      $user = Auth::user();
-      $settings = Settings::first();
-      return view('profile.index')->with([
-        'user'=>$user,
-        'settings'=>$settings
-      ]);
+
+    /**
+     * Middleware that says user must be authenticated and 2fa verified
+     *
+     * ProfileController constructor.
+     */
+    public function __construct()
+    {
+        $this -> middleware('auth');
+        $this -> middleware('verify_2fa');
     }
 
-    public function VendorApplyShow(){
-      if (Auth::user()->application->first() !== null) {
-         return redirect()->route('home');
-      }
-      return view('profile.vendor.apply');
+    public function index(){
+        return view('profile.index');
     }
 
-    public function VendorApplyPost(Request $request){
-          if (Auth::user()->application->first() !== null) {
-             return redirect()->route('home');
-          }
+    /**
+     * Banned view
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function banned()
+    {
+        if(auth()->user()->isBanned())
+            $until = auth() -> user() -> bans() -> orderByDesc('until') -> first() -> until;
+        else
+            return redirect()->route('profile.index');
 
-        if ($request->offer == null || $request->void == null || $request->other_markets == null) {
-          session()->flash('errormessage','You must populate all fields ');
-          return redirect()->back()->withInput();
+        return view('profile.banned', [
+            'until' => $until
+        ]);
+    }
+
+    /**
+     * Displays the page with the current pgp and the form to change pgp
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function pgp()
+    {
+        return view('profile.pgp');
+    }
+
+    /**
+     * Accepts the request for the new PGP key and generates data to confirm pgp
+     *
+     * @param NewPGPKeyRequest $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function pgpPost(NewPGPKeyRequest $request)
+    {
+        try{
+            $request -> persist();
         }
-        $va = new VendorApplication;
-        $va->uniqueid = 'VA'.str_random(28);
-        $va->user_id = Auth::user()->id;
-        $va->status = 0;
-        $va->offer = $request->offer;
-        $va->void = $request->void;
-        $va->other_markets = $request->other_markets;
-        $va->save();
+        catch(RequestException $e){
+            session() -> flash('errormessage', $e -> getMessage());
+        }
 
-        session()->flash('vendorapplication',true);
-        return redirect()->route('vendorapplysuccess');
+        return redirect() -> route('profile.pgp.confirm');
     }
 
-    public function VendorApplySuccess(){
-      if (!session()->has('vendorapplication')) {
-        return redirect()->route('home');
-      }
-        return view('profile.vendor.applysuccess');
+    /**
+     * Displays the page to confirm new PGP request
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function pgpConfirm()
+    {
+        return view('profile.confirmpgp');
     }
 
-    public function VendorPay(){
-      if (Auth::user()->vendor == true) {
-          return redirect()->route('profile');
-      }
-      $settings = Settings::first();
-      return view('profile.vendor.pay')->with([
-        'settings'=>$settings
-      ]);
+    /**
+     * Saves old key and sets new pgp key
+     *
+     * @param StorePGPRequest $request
+     * @return \Illuminate\Http\RedirectResponse
+     *
+     */
+    public function storePGP(StorePGPRequest $request)
+    {
+        try{
+            $request -> persist();
+            session() -> flash('success', 'You have successfully changed you PGP key.');
+        }
+        catch(RequestException $e){
+            session() -> flash('errormessage', $e -> getMessage());
+            return redirect() -> back();
+        }
+
+        return redirect() -> route('profile.pgp');
     }
 
-    public function VendorPayPost(Request $request){
-      if (Auth::user()->vendor == true) {
-          return redirect()->route('profile');
-      }
-
-      $user = Auth::user();
-      $settings = Settings::first();
-      if ($user->balance < $settings->vendor_price) {
-        session()->flash('errormessage','You don\'t have enough bitcoins in your balance' );
-        return redirect()->back();
-      }
-      $user->vendor = true;
-      $user->balance -= $settings->vendor_price;
-      $user->save();
-      $application = $user->application()->first();
-      if ($application !== null) {
-        $application->status = 3;
-        $application->save();
-      }
-
-      session()->flash('vendorpaid',true);
-      return redirect()->route('vendorpaysuccess');
+    /**
+     * Page that displays old pgp keys
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function oldpgp()
+    {
+        return view('profile.oldpgp',
+            [
+                'keys' => auth() -> user() -> pgpKeys() -> orderByDesc('created_at') -> get(),
+            ]
+            );
     }
 
-    public function VendorPaySuccess(){
-      if (!session()->has('vendorpaid')) {
-        return redirect()->route('home');
-      }
-      return view('profile.vendor.paysuccess');
+    /**
+     * Accepts request for changing password
+     *
+     * @param \App\Http\Requests\Profile\ChangePasswordRequest $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function changePassword(\App\Http\Requests\Profile\ChangePasswordRequest $request)
+    {
+        try{
+            $request -> persist();
+        }
+        catch (RequestException $e){
+            session() -> flash('errormessage', $e -> getMessage());
+        }
+
+        return redirect() -> back();
     }
 
-    public function ShowProducts(){
-      $products = Auth::user()->products()->orderBy('created_at','desc')->paginate(20);
-      return view('profile.products')->with([
-        'products'=>$products
-      ]);
+    /**
+     * Turn 2fa on or off
+     *
+     * @param $turn
+     * @return \Illuminate\Http\RedirectResponse
+     *
+     */
+    public function change2fa($turn)
+    {
+        try{
+            auth() -> user() -> set2fa($turn);
+            session() -> flash('success', 'You have changed you 2FA setting.');
+        }
+        catch (RequestException $e){
+            session() -> flash('errormessage', $e -> getMessage());
+        }
+        return redirect() -> back();
     }
 
-    public function EditProduct($uniqueid){
-      $product = Product::where('uniqueid',$uniqueid)->first();
-      if ($product == null || $product->seller->id !== Auth::user()->id) {
-        return redirect()->route('products');
-      }
-
-      return view('profile.editproduct')->with('product',$product);
+    /**
+     * Become a Vendor page that has link for become a Vendor request
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function become()
+    {
+        return view('profile.become',[
+            'vendorFee' => config('marketplace.vendor_fee'),
+            'depositAddresses' => auth() -> user() -> vendorPurchases
+        ]);
     }
 
-    public function ShowSales(){
-        $sales = Auth::user()->sales()->orderBy('created_at','desc')->paginate(20);
-    //  $products = Auth::user()->products()->where('sold',true)->orderBy('purchase_time','desc')->paginate(20);
-      return view('profile.sales')->with([
-        'sales'=>$sales
-      ]);
+    /**
+     * Make Vendor from the user
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function becomeVendor(BecomeVendorRequest $request)
+    {
+        try{
+            auth() -> user() -> becomeVendor( $request -> address);
+            return redirect() -> route('profile.vendor');
+        }
+        catch (RedirectException $e){
+            $e -> flashError();
+            return redirect($e -> getRoute());
+        }
+        catch (RequestException $e){
+            session() -> flash('errormessage', $e -> getMessage());
+        }
+        return redirect() -> back();
     }
 
-    public function AutoFill($uniqueid){
-      $product = Product::where('uniqueid',$uniqueid)->first();
-      if ($product == null || $product->seller->id !== Auth::user()->id || $product->auction == true || $product->sold == true) {
-        return redirect()->route('products');
-      }
-      if ($product->seller->id !== Auth::user()->id) {
-         return redirect()->route('profile');
-      }
-      if ($product->autofilled == true) {
-        $autofill = unserialize($product->autofill);
+    /**
+     * Add product to the users wishlist
+     *
+     * @param Product $product
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function addRemoveWishlist(Product $product)
+    {
+        // Remove if it is added
+        if(Wishlist::added($product, auth() -> user())){
+            // removing
+            Wishlist::getWish($product) -> delete();
+        }
+        // add if it is not added
+        else {
+            $newWhish = new Wishlist([
+               'product_id' => $product -> id,
+               'user_id' => auth() -> user() -> id,
+            ]);
 
-      } else {
-        $autofill = null;
-      }
-      return view('profile.autofill')->with([
-        'product'=>$product,
-        'autofill'=>$autofill
-      ]);
+            $newWhish -> save();
+        }
+
+        return redirect() -> back();
     }
 
-    public function AutoFillPost($uniqueid,Request $request){
-      $product = Product::where('uniqueid',$uniqueid)->first();
-      if ($product == null || $product->seller->id !== Auth::user()->id || $product->auction == true) {
-        return redirect()->route('products');
-      }
-      if ($product->seller->id !== Auth::user()->id) {
-         return redirect()->route('profile');
-      }
-      if ($request->autofill == null) {
-         session()->flash('errormessage','You must add at least one item');
-         return redirect()->back()->withInput();
-      }
-            $text = trim($request->autofill);
-            $textAr = explode("\n", $text);
-            $textAr = array_filter($textAr, 'trim'); // remove any extra \r characters left behind
-            $autofill = [];
-            foreach ($textAr as $line) {
-              $line = str_replace("\r\n", "", $line);
-              $line = str_replace("\r", "", $line);
-              if ($line !== "") {
-                  $autofill[]=$line;
-              }
-            }
-          $product->autofilled = true;
-          $product->autofill= serialize($autofill);
-          $product->save();
-          return redirect()->route('products');
-
-
+    /**
+     * Returns the page with the product wishlist
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function wishlist()
+    {
+        return view('profile.wishlist');
     }
 
-    public function ShowPurchases(){
-    //  $products = Auth::user()->products()->where('buyer_id',Auth::user()->id)->orderBy('purchase_time','desc')->paginate(20);
-        $purchases = Auth::user()->purchases()->orderBy('created_at','desc')->paginate(20);
-      return view('profile.purchases')->with([
-        'purchases'=>$purchases
-      ]);
-    }
-    public function ShowFeedback(){
-
-      $feedback = Auth::user()->feedback()->where('active',1)->orderBy('created_at','desc')->paginate(20);
-      return view('profile.feedback')->with([
-        'feedback'=>$feedback,
-      ]);
-    }
-
-    public function View($uniqueid,$item = 'profile'){
-      $user = User::where('uniqueid',$uniqueid)->first();
-      if ($user == null) {
-         return redirect()->back();
-      }
-      if ($item !== 'profile' && $item !== 'pgp' && $item !== 'feedback') {
-         $item == 'profile';
-      }
-      return view('profile.view')->with([
-        'user'=>$user,
-        'item'=>$item
-      ]);
+    /**
+     * Show the cart page
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function cart()
+    {
+        return view('cart.index',[
+            'items' => Cart::getCart() -> items(),
+            'numberOfItems' => Cart::getCart()->numberOfItems(),
+            'totalSum' => Cart::getCart() -> total(),
+        ]);
     }
 
-    public function EditProfile(Request $request){
-      $user = Auth::user();
-      $user->profile = $request->pd;
-      $user->pgp = $request->pgp;
-      $user->save();
-      return redirect()->back();
+    /**
+     * Add or edit item to cart
+     *
+     * @param NewItemRequest $request
+     * @param Product $product
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function addToCart(NewItemRequest $request, Product $product)
+    {
+        try{
+            $request -> persist($product);
+            session() -> flash('success', 'You have added/changed an item!');
+
+            return redirect() -> route('profile.cart');
+        }
+        catch (RequestException $e){
+            $e -> flashError();
+        }
+
+        return redirect() -> back();
     }
 
-    public function ViewStore($uniqueid){
-      $user = User::where('uniqueid',$uniqueid)->first();
-      if ($user == null) {
-         return redirect()->back();
-      }
-      $products = $user->products()->where('active',1)->where('sold',0)->orderBy('created_at','desc')->paginate(25);
-      return view('profile.store')->with([
-        'user'=>$user,
-        'products'=>$products
-      ]);
+    /**
+     * Clear cart and return back
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function clearCart()
+    {
+        session() -> forget(Cart::SESSION_NAME);
+        session() -> flash('success', 'You have cleared your cart!');
+
+        return redirect() -> back();
     }
 
-    public function ShowWallet(){
-      return view('profile.wallet');
+    /**
+     * Remove $product from cart
+     *
+     * @param Product $product
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function removeProduct(Product $product)
+    {
+        Cart::getCart() -> removeFromCart($product);
+        session() -> flash('You have removed a product.');
+
+        return redirect() -> back();
+    }
+
+    /**
+     * Return table with checkout
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function checkout()
+    {
+        return view('cart.checkout', [
+            'items' => Cart::getCart() -> items(),
+            'totalSum' => Cart::getCart() -> total(),
+            'numberOfItems' => Cart::getCart()->numberOfItems(),
+
+        ]);
+    }
+
+    /**
+     * Commit purchases from cart
+     *
+     * @param MakePurchasesRequest $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function makePurchases(MakePurchasesRequest $request)
+    {
+        try{
+            $request -> persist();
+        }
+        catch (RequestException $e){
+            $e -> flashError();
+            return redirect() -> back();
+        }
+
+        return redirect() -> route('profile.purchases');
+    }
+
+    /**
+     * Return all users purchases
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function purchases($state = '')
+    {
+        $purchases = auth() -> user() -> purchases() -> orderByDesc('created_at') -> paginate(20);
+
+        if(array_key_exists($state, Purchase::$states))
+            $purchases = auth() -> user() -> purchases() -> where('state', $state) -> orderByDesc('created_at') -> paginate(20);
+
+        return view('profile.purchases.index', [
+            'purchases' => $purchases,
+            'state' => $state,
+        ]);
+    }
+
+    /**
+     * Return view for encrypted message
+     *
+     * @param Purchase $purchase
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function purchaseMessage(Purchase $purchase)
+    {
+        return view('profile.purchases.viewmessage', [
+            'purchase' => $purchase
+        ]);
+    }
+
+    /**
+     * See purchase details
+     *
+     * @param Purchase $purchase
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function purchase(Purchase $purchase)
+    {
+        return view('profile.purchases.purchase', [
+            'purchase' => $purchase
+        ]);
+    }
+
+    /**
+     * Show delivered confirmation page
+     *
+     * @param Purchase $purchase
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function deliveredConfirm(Purchase $purchase)
+    {
+        return view('profile.purchases.confirmdelivered', [
+            'backRoute' => redirect() -> back() -> getTargetUrl(),
+            'purchase' => $purchase,
+        ]);
+    }
+
+    /**
+     * Mark Purchase as Delivered
+     *
+     * @param Purchase $purchase
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function markAsDelivered(Purchase $purchase)
+    {
+        try{
+            $purchase -> delivered();
+        }
+        catch(RequestException $e){
+            $e -> flashError();
+        }
+
+        return redirect() -> route('profile.purchases.single', $purchase);
+    }
+
+    /**
+     * Returns view for confirming canceled
+     *
+     * @param Purchase $purchase
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View\
+     */
+    public function confirmCanceled(Purchase $purchase)
+    {
+        return view('profile.purchases.confirmcanceled', [
+            'backRoute' => redirect() -> back() -> getTargetUrl(),
+            'sale' => $purchase
+        ]);
+    }
+
+    /**
+     * Make purchase as canceled
+     *
+     * @param Purchase $purchase
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function markAsCanceled(Purchase $purchase)
+    {
+        try{
+            $purchase -> cancel();
+            session() -> flash('success', 'You have successfully marked sale as canceled!');
+        }
+        catch (RequestException $e){
+            $e -> flashError();
+        }
+        // if this logged user is vendor
+        if($purchase->isVendor())
+            return redirect() -> route('profile.sales.single', $purchase);
+        return redirect() -> route('profile.purchases.single', $purchase);
+    }
+
+    /**
+     * Make Dispute for the given purchase
+     *
+     * @param MakeDisputeRequest $request
+     * @param Purchase $purchase
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function makeDispute(MakeDisputeRequest $request, Purchase $purchase)
+    {
+        try{
+            $purchase -> makeDispute($request -> message);
+            session() -> flash('success', 'You have made a dispute for this purchase!');
+        }
+        catch (RequestException $e){
+            $e -> flashError();
+        }
+
+        return redirect() -> back();
+    }
+
+    /**
+     * Send new dispute message to the dispute
+     *
+     * @param NewDisputeMessageRequest $request
+     * @param Dispute $dispute
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function newDisputeMessage(NewDisputeMessageRequest $request, Dispute $dispute)
+    {
+        try{
+            $dispute -> newMessage($request -> message);
+            event(new ProductDisputeNewMessageSent($dispute->purchase,auth()->user()));
+            session() -> flash('success', 'You have successfully posted new message for dispute!');
+        }
+        catch (RequestException $e){
+            $e -> flashError();
+        }
+
+        return redirect() -> back();
+    }
+
+
+    /**
+     * Leaving feedback
+     *
+     * @param LeaveFeedbackRequest $request
+     * @param Purchase $purchase
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function leaveFeedback(LeaveFeedbackRequest $request, Purchase $purchase)
+    {
+        try{
+            $request -> persist($purchase);
+            session() -> flash('success', 'You have left your feedback!');
+        }
+        catch (RequestException $e){
+            $e -> flashError();
+        }
+
+        return redirect() -> route('profile.purchases.single', $purchase);
+    }
+
+    /**
+     * Change vendor's address
+     *
+     * @param ChangeAddressRequest $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function changeAddress(ChangeAddressRequest $request)
+    {
+        try{
+            auth() -> user() -> setAddress($request -> address, $request -> coin);
+            session() -> flash('success', 'You have successfully changed your address!');
+        }
+        catch (RequestException $e){
+            $e -> flashError();
+        }
+
+        return redirect() -> back();
+    }
+
+    /**
+     * Remove address of the logged user with given $id
+     *
+     * @param $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function removeAddress($id)
+    {
+        try{
+//            $address = Address::findOrFail($id);
+            // Check for number of addresses for coin
+//            if(auth() -> user() -> numberOfAddresses($address -> coin) <= 1)
+//                throw new RequestException('You must have at least one address for each coin!');
+//
+            auth() -> user() -> addresses() -> where('id', $id) -> delete();
+            session() -> flash('success', 'You have successfully removed your address!');
+        }
+        catch (RequestException $e){
+            $e -> flashError();
+        }
+
+        return redirect() -> back();
+    }
+
+    /**
+     * Showing all tickets
+     *
+     * @param Ticket|null $ticket
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function tickets(Ticket $ticket = null)
+    {
+        // Tickets
+        if(!is_null($ticket)){
+            $replies = $ticket -> replies() -> orderByDesc('created_at') -> paginate( config('marketplace.products_per_page'));
+        }
+        else {
+            $replies = collect(); // empty collection
+        }
+
+
+        return view('profile.tickets', [
+            'replies' => $replies,
+            'ticket' => $ticket
+        ]);
+    }
+
+    /**
+     * Opens new Ticket form
+     *
+     * @param NewTicketRequest $request
+     */
+    public function newTicket(NewTicketRequest $request)
+    {
+        try {
+            $newTicket = Ticket::openTicket($request -> title);
+            TicketReply::postReply($newTicket, $request -> message);
+
+            return redirect() -> route('profile.tickets', $newTicket);
+        }
+        catch(RequestException $e){
+            Log::error($e -> getMessage());
+            session() -> flash('errormessage', $e -> getMessage());
+        }
+    }
+
+    public function newTicketMessage(Ticket $ticket, NewTicketMessageRequest $request)
+    {
+        try{
+            TicketReply::postReply($ticket, $request -> message);
+        }
+        catch (RequestException $e){
+            Log::error($e);
+            session() -> flash('errormessage', $e -> getMessage());
+        }
+        return redirect() -> back();
     }
     
+
 }

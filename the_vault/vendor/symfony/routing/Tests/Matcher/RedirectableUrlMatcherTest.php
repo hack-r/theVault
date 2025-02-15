@@ -23,13 +23,25 @@ class RedirectableUrlMatcherTest extends UrlMatcherTest
         $coll->add('foo', new Route('/foo/'));
 
         $matcher = $this->getUrlMatcher($coll);
-        $matcher->expects($this->once())->method('redirect')->willReturn([]);
+        $matcher->expects($this->once())->method('redirect')->will($this->returnValue([]));
         $matcher->match('/foo');
     }
 
+    public function testExtraTrailingSlash()
+    {
+        $coll = new RouteCollection();
+        $coll->add('foo', new Route('/foo'));
+
+        $matcher = $this->getUrlMatcher($coll);
+        $matcher->expects($this->once())->method('redirect')->will($this->returnValue([]));
+        $matcher->match('/foo/');
+    }
+
+    /**
+     * @expectedException \Symfony\Component\Routing\Exception\ResourceNotFoundException
+     */
     public function testRedirectWhenNoSlashForNonSafeMethod()
     {
-        $this->expectException('Symfony\Component\Routing\Exception\ResourceNotFoundException');
         $coll = new RouteCollection();
         $coll->add('foo', new Route('/foo/'));
 
@@ -49,7 +61,7 @@ class RedirectableUrlMatcherTest extends UrlMatcherTest
             ->expects($this->once())
             ->method('redirect')
             ->with('/foo', 'foo', 'ftp')
-            ->willReturn(['_route' => 'foo'])
+            ->will($this->returnValue(['_route' => 'foo']))
         ;
         $matcher->match('/foo');
     }
@@ -76,9 +88,23 @@ class RedirectableUrlMatcherTest extends UrlMatcherTest
             ->expects($this->once())
             ->method('redirect')
             ->with('/foo/baz', 'foo', 'https')
-            ->willReturn(['redirect' => 'value'])
+            ->will($this->returnValue(['redirect' => 'value']))
         ;
         $this->assertEquals(['_route' => 'foo', 'bar' => 'baz', 'redirect' => 'value'], $matcher->match('/foo/baz'));
+    }
+
+    public function testSchemeRedirectForRoot()
+    {
+        $coll = new RouteCollection();
+        $coll->add('foo', new Route('/', [], [], [], '', ['https']));
+
+        $matcher = $this->getUrlMatcher($coll);
+        $matcher
+            ->expects($this->once())
+            ->method('redirect')
+            ->with('/', 'foo', 'https')
+            ->will($this->returnValue(['redirect' => 'value']));
+        $this->assertEquals(['_route' => 'foo', 'redirect' => 'value'], $matcher->match('/'));
     }
 
     public function testSlashRedirectWithParams()
@@ -91,7 +117,7 @@ class RedirectableUrlMatcherTest extends UrlMatcherTest
             ->expects($this->once())
             ->method('redirect')
             ->with('/foo/baz/', 'foo', null)
-            ->willReturn(['redirect' => 'value'])
+            ->will($this->returnValue(['redirect' => 'value']))
         ;
         $this->assertEquals(['_route' => 'foo', 'bar' => 'baz', 'redirect' => 'value'], $matcher->match('/foo/baz'));
     }
@@ -122,8 +148,26 @@ class RedirectableUrlMatcherTest extends UrlMatcherTest
         $coll->add('bar', new Route('/{name}'));
 
         $matcher = $this->getUrlMatcher($coll);
-        $matcher->expects($this->once())->method('redirect')->with('/foo/')->willReturn(['_route' => 'foo']);
+        $matcher->expects($this->once())->method('redirect')->with('/foo/', 'foo')->will($this->returnValue(['_route' => 'foo']));
         $this->assertSame(['_route' => 'foo'], $matcher->match('/foo'));
+
+        $coll = new RouteCollection();
+        $coll->add('foo', new Route('/foo'));
+        $coll->add('bar', new Route('/{name}/'));
+
+        $matcher = $this->getUrlMatcher($coll);
+        $matcher->expects($this->once())->method('redirect')->with('/foo', 'foo')->will($this->returnValue(['_route' => 'foo']));
+        $this->assertSame(['_route' => 'foo'], $matcher->match('/foo/'));
+    }
+
+    public function testMissingTrailingSlashAndScheme()
+    {
+        $coll = new RouteCollection();
+        $coll->add('foo', (new Route('/foo/'))->setSchemes(['https']));
+
+        $matcher = $this->getUrlMatcher($coll);
+        $matcher->expects($this->once())->method('redirect')->with('/foo/', 'foo', 'https')->will($this->returnValue([]));
+        $matcher->match('/foo');
     }
 
     public function testSlashAndVerbPrecedenceWithRedirection()

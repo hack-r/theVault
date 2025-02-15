@@ -48,7 +48,7 @@ class ArgumentMetadataFactoryTest extends TestCase
 
         $this->assertEquals([
             new ArgumentMetadata('foo', self::class, false, true, null, true),
-            new ArgumentMetadata('bar', FakeClassThatDoesNotExist::class, false, true, null, true),
+            new ArgumentMetadata('bar', __NAMESPACE__.'\FakeClassThatDoesNotExist', false, true, null, true),
             new ArgumentMetadata('baz', 'Fake\ImportedAndFake', false, true, null, true),
         ], $arguments);
     }
@@ -58,7 +58,7 @@ class ArgumentMetadataFactoryTest extends TestCase
         $arguments = $this->factory->createArgumentMetadata([$this, 'signature3']);
 
         $this->assertEquals([
-            new ArgumentMetadata('bar', FakeClassThatDoesNotExist::class, false, false, null),
+            new ArgumentMetadata('bar', __NAMESPACE__.'\FakeClassThatDoesNotExist', false, false, null),
             new ArgumentMetadata('baz', 'Fake\ImportedAndFake', false, false, null),
         ], $arguments);
     }
@@ -80,13 +80,10 @@ class ArgumentMetadataFactoryTest extends TestCase
 
         $this->assertEquals([
             new ArgumentMetadata('foo', 'array', false, true, null, true),
-            new ArgumentMetadata('bar', null, false, true, null, true),
+            new ArgumentMetadata('bar', null, false, false, null),
         ], $arguments);
     }
 
-    /**
-     * @requires PHP 5.6
-     */
     public function testVariadicSignature()
     {
         $arguments = $this->factory->createArgumentMetadata([new VariadicController(), 'action']);
@@ -97,9 +94,6 @@ class ArgumentMetadataFactoryTest extends TestCase
         ], $arguments);
     }
 
-    /**
-     * @requires PHP 7.0
-     */
     public function testBasicTypesSignature()
     {
         $arguments = $this->factory->createArgumentMetadata([new BasicTypesController(), 'action']);
@@ -111,9 +105,6 @@ class ArgumentMetadataFactoryTest extends TestCase
         ], $arguments);
     }
 
-    /**
-     * @requires PHP 7.1
-     */
     public function testNullableTypesSignature()
     {
         $arguments = $this->factory->createArgumentMetadata([new NullableController(), 'action']);
@@ -122,7 +113,7 @@ class ArgumentMetadataFactoryTest extends TestCase
             new ArgumentMetadata('foo', 'string', false, false, null, true),
             new ArgumentMetadata('bar', \stdClass::class, false, false, null, true),
             new ArgumentMetadata('baz', 'string', false, true, 'value', true),
-            new ArgumentMetadata('last', 'string', false, true, '', false),
+            new ArgumentMetadata('mandatory', null, false, false, null, true),
         ], $arguments);
     }
 
@@ -142,7 +133,7 @@ class ArgumentMetadataFactoryTest extends TestCase
     {
     }
 
-    private function signature5(array $foo = null, $bar = null)
+    private function signature5(array $foo = null, $bar)
     {
     }
 }

@@ -7,11 +7,22 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "fakerphp/faker": "^1.24",
+        "laminas/laminas-diactoros": "^3.5",
         "laravel/framework": "^11.31",
-        "laravel/tinker": "^2.9"
+        "laravel/scout": "^10.13",
+        "laravel/tinker": "^2.9",
+        "league/flysystem": "^3.29",
+        "nwidart/laravel-modules": "^11.1",
+        "opis/closure": "^4.3",
+        "paragonie/halite": "^5.1",
+        "phpdocumentor/reflection-docblock": "^5.6",
+        "phpseclib/phpseclib": "^3.0",
+        "symfony/mailer": "^7.2",
+        "vonage/client": "^4.1"
     },
     "require-dev": {
-        "fakerphp/faker": "^1.23",
+        "barryvdh/laravel-ide-helper": "^3.5",
         "laravel/pail": "^1.1",
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.26",
@@ -63,7 +74,8 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "wikimedia/composer-merge-plugin": true
         }
     },
     "minimum-stability": "stable",

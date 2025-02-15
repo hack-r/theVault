@@ -17,6 +17,7 @@ use Symfony\Component\HttpKernel\Event\FinishRequestEvent;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpKernel\EventListener\TranslatorListener;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Contracts\Translation\LocaleAwareInterface;
 
 class TranslatorListenerTest extends TestCase
 {
@@ -26,7 +27,7 @@ class TranslatorListenerTest extends TestCase
 
     protected function setUp()
     {
-        $this->translator = $this->getMockBuilder('Symfony\Component\Translation\TranslatorInterface')->getMock();
+        $this->translator = $this->getMockBuilder(LocaleAwareInterface::class)->getMock();
         $this->requestStack = $this->getMockBuilder('Symfony\Component\HttpFoundation\RequestStack')->getMock();
         $this->listener = new TranslatorListener($this->translator, $this->requestStack);
     }
@@ -45,15 +46,13 @@ class TranslatorListenerTest extends TestCase
     public function testDefaultLocaleIsUsedOnExceptionsInOnKernelRequest()
     {
         $this->translator
-            ->expects($this->exactly(2))
+            ->expects($this->at(0))
             ->method('setLocale')
-            ->withConsecutive(
-                ['fr'],
-                ['en']
-            )
-            ->willReturnOnConsecutiveCalls(
-                $this->throwException(new \InvalidArgumentException())
-            );
+            ->willThrowException(new \InvalidArgumentException());
+        $this->translator
+            ->expects($this->at(1))
+            ->method('setLocale')
+            ->with($this->equalTo('en'));
 
         $event = new GetResponseEvent($this->createHttpKernel(), $this->createRequest('fr'), HttpKernelInterface::MASTER_REQUEST);
         $this->listener->onKernelRequest($event);
@@ -84,15 +83,13 @@ class TranslatorListenerTest extends TestCase
     public function testDefaultLocaleIsUsedOnExceptionsInOnKernelFinishRequest()
     {
         $this->translator
-            ->expects($this->exactly(2))
+            ->expects($this->at(0))
             ->method('setLocale')
-            ->withConsecutive(
-                ['fr'],
-                ['en']
-            )
-            ->willReturnOnConsecutiveCalls(
-                $this->throwException(new \InvalidArgumentException())
-            );
+            ->willThrowException(new \InvalidArgumentException());
+        $this->translator
+            ->expects($this->at(1))
+            ->method('setLocale')
+            ->with($this->equalTo('en'));
 
         $this->setMasterRequest($this->createRequest('fr'));
         $event = new FinishRequestEvent($this->createHttpKernel(), $this->createRequest('de'), HttpKernelInterface::SUB_REQUEST);
@@ -117,6 +114,6 @@ class TranslatorListenerTest extends TestCase
         $this->requestStack
             ->expects($this->any())
             ->method('getParentRequest')
-            ->willReturn($request);
+            ->will($this->returnValue($request));
     }
 }

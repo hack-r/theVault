@@ -16,15 +16,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class JsonResponseTest extends TestCase
 {
-    protected function setUp()
-    {
-        parent::setUp();
-
-        if (!\defined('HHVM_VERSION')) {
-            $this->iniSet('serialize_precision', 14);
-        }
-    }
-
     public function testConstructorEmptyCreatesJsonObject()
     {
         $response = new JsonResponse();
@@ -52,8 +43,7 @@ class JsonResponseTest extends TestCase
         $this->assertSame('0', $response->getContent());
 
         $response = new JsonResponse(0.1);
-        $this->assertEquals(0.1, $response->getContent());
-        $this->assertIsString($response->getContent());
+        $this->assertSame('0.1', $response->getContent());
 
         $response = new JsonResponse(true);
         $this->assertSame('true', $response->getContent());
@@ -141,8 +131,7 @@ class JsonResponseTest extends TestCase
 
         $response = JsonResponse::create(0.1);
         $this->assertInstanceOf('Symfony\Component\HttpFoundation\JsonResponse', $response);
-        $this->assertEquals(0.1, $response->getContent());
-        $this->assertIsString($response->getContent());
+        $this->assertSame('0.1', $response->getContent());
 
         $response = JsonResponse::create(true);
         $this->assertInstanceOf('Symfony\Component\HttpFoundation\JsonResponse', $response);
@@ -216,23 +205,29 @@ class JsonResponseTest extends TestCase
         $this->assertSame('{"foo":"bar"}', $response->getContent());
     }
 
+    /**
+     * @expectedException \InvalidArgumentException
+     */
     public function testSetCallbackInvalidIdentifier()
     {
-        $this->expectException('InvalidArgumentException');
         $response = new JsonResponse('foo');
         $response->setCallback('+invalid');
     }
 
+    /**
+     * @expectedException \InvalidArgumentException
+     */
     public function testSetContent()
     {
-        $this->expectException('InvalidArgumentException');
         JsonResponse::create("\xB1\x31");
     }
 
+    /**
+     * @expectedException \Exception
+     * @expectedExceptionMessage This error is expected
+     */
     public function testSetContentJsonSerializeError()
     {
-        $this->expectException('Exception');
-        $this->expectExceptionMessage('This error is expected');
         if (!interface_exists('JsonSerializable', false)) {
             $this->markTestSkipped('JsonSerializable is required.');
         }

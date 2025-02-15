@@ -35,18 +35,18 @@ class MockFileSessionStorageTest extends TestCase
 
     protected function setUp()
     {
-        $this->sessionDir = sys_get_temp_dir().'/sf2test';
+        $this->sessionDir = sys_get_temp_dir().'/sftest';
         $this->storage = $this->getStorage();
     }
 
     protected function tearDown()
     {
-        array_map('unlink', glob($this->sessionDir.'/*'));
+        $this->sessionDir = null;
+        $this->storage = null;
+        array_map('unlink', glob($this->sessionDir.'/*.session'));
         if (is_dir($this->sessionDir)) {
             rmdir($this->sessionDir);
         }
-        $this->sessionDir = null;
-        $this->storage = null;
     }
 
     public function testStart()
@@ -107,9 +107,11 @@ class MockFileSessionStorageTest extends TestCase
         $this->assertEquals('bar', $storage2->getBag('attributes')->get('foo'), 'values persist between instances');
     }
 
+    /**
+     * @expectedException \RuntimeException
+     */
     public function testSaveWithoutStart()
     {
-        $this->expectException('RuntimeException');
         $storage1 = $this->getStorage();
         $storage1->save();
     }

@@ -2,6 +2,9 @@
 
 namespace App\Console;
 
+use App\Console\Commands\CompletePurchaseCommand;
+use App\Console\Commands\DeleteOldMessages;
+use App\Console\Commands\ReleasePurchasesCommand;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -13,7 +16,7 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        'App\Console\Commands\Checkauctions',
+        //
     ];
 
     /**
@@ -24,17 +27,28 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-         $schedule->command('auctioncheck')->everyMinute();
+        // Schedule to delete old messages every old days
+        $schedule -> command(DeleteOldMessages::class, ['days' => config('marketplace.days_old_messages')])
+                    ->days(config('marketplace.days_old_messages'));
+
+        // Make the command for releasing purchases runs each X days
+        $schedule -> command(ReleasePurchasesCommand::class, ['days' => config('marketplace.days_old_purchases')])
+                    ->days(config('marketplace.days_old_purchases'));
+
+        // Run completing command for purchases every defined number of days
+        $schedule -> command(CompletePurchaseCommand::class) -> days(config('marketplace.days_complete'));
 
     }
 
     /**
-     * Register the Closure based commands for the application.
+     * Register the commands for the application.
      *
      * @return void
      */
     protected function commands()
     {
+        $this->load(__DIR__.'/Commands');
+
         require base_path('routes/console.php');
     }
 }
